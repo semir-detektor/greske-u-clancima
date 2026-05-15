@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alat za lekturu novinskih tekstova</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6fa; color: #222; }
+
+    header { background: #1a2e4a; color: #fff; padding: 18px 32px; display: flex; align-items: center; gap: 14px; }
+    header .logo { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; }
+    header .subtitle { font-size: 0.85rem; color: #a8bdd0; margin-top: 2px; }
+
+    .container { max-width: 860px; margin: 36px auto; padding: 0 20px; }
+
+    .input-card { background: #fff; border-radius: 8px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .input-card label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; color: #444; }
+    .input-row { display: flex; gap: 10px; }
+    .input-row input { flex: 1; padding: 10px 14px; border: 1.5px solid #dde2eb; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color .2s; }
+    .input-row input:focus { border-color: #1a2e4a; }
+    .btn { padding: 10px 22px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .btn-primary { background: #1a2e4a; color: #fff; }
+    .btn-primary:hover { background: #253f62; }
+    .btn-primary:disabled { background: #8a9ab0; cursor: default; }
+    .btn-fact { background: #e8f0fe; color: #1a55c7; border: 1.5px solid #c2d4f8; }
+    .btn-fact:hover { background: #d0e2fd; }
+
+    .spinner { display: none; text-align: center; padding: 40px; color: #888; font-size: 0.9rem; }
+    .spinner::before { content: ''; display: block; width: 32px; height: 32px; border: 3px solid #dde; border-top-color: #1a2e4a; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .results { margin-top: 24px; display: none; }
+
+    .summary-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+    .badge-red    { background: #fde8e8; color: #b91c1c; }
+    .badge-orange { background: #fff3e0; color: #c05c00; }
+    .badge-blue   { background: #e8f0fe; color: #1a55c7; }
+    .badge-purple { background: #f3e8ff; color: #6d28d9; }
+    .badge-teal   { background: #e0f7f4; color: #0f6b5e; }
+    .badge-grey   { background: #f0f0f0; color: #555; }
+    .badge-zero   { opacity: 0.4; }
+
+    .section { background: #fff; border-radius: 8px; margin-bottom: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .section-header { padding: 12px 18px; font-weight: 700; font-size: 0.88rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .section-header:hover { filter: brightness(.97); }
+    .section-body { padding: 0 18px 14px; }
+
+    .sh-tipografske { background: #fde8e8; color: #b91c1c; }
+    .sh-gramatičke  { background: #fff3e0; color: #c05c00; }
+    .sh-formatiranje{ background: #e8f0fe; color: #1a55c7; }
+    .sh-stylebook   { background: #f3e8ff; color: #6d28d9; }
+    .sh-logika      { background: #e0f7f4; color: #0f6b5e; }
+    .sh-varijante   { background: #fef3c7; color: #92400e; }
+
+    .issue { border-bottom: 1px solid #f0f0f0; padding: 10px 0; font-size: 0.88rem; line-height: 1.5; }
+    .issue:last-child { border-bottom: none; }
+    .issue .original { font-family: monospace; background: #f8f8f8; padding: 2px 6px; border-radius: 4px; color: #c0392b; }
+    .issue .arrow { color: #aaa; margin: 0 6px; }
+    .issue .fix { font-family: monospace; background: #f0faf0; padding: 2px 6px; border-radius: 4px; color: #27ae60; }
+    .issue .label { font-weight: 600; color: #555; margin-bottom: 4px; font-size: 0.82rem; }
+    .issue .desc { color: #555; margin-top: 3px; }
+    .empty { color: #aaa; font-size: 0.85rem; padding: 10px 0; }
+
+    .komentar-box { background: #fffbf0; border-left: 3px solid #f59e0b; padding: 14px 16px; border-radius: 0 6px 6px 0; font-size: 0.9rem; line-height: 1.6; margin-top: 16px; color: #444; }
+
+    .factcheck-trigger { text-align: center; margin: 20px 0; }
+    .factcheck-results { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-top: 14px; }
+    .factcheck-results h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; color: #1a2e4a; }
+    .claim { border-bottom: 1px solid #f0f0f0; padding: 12px 0; font-size: 0.88rem; }
+    .claim:last-child { border-bottom: none; }
+    .claim .claim-text { font-style: italic; color: #555; margin-bottom: 6px; }
+    .claim .claim-status { display: inline-block; padding: 2px 10px; border-radius: 12px; font-weight: 700; font-size: 0.78rem; margin-bottom: 5px; }
+    .status-TAČNO              { background: #dcfce7; color: #166534; }
+    .status-NETAČNO            { background: #fee2e2; color: #991b1b; }
+    .status-DJELIMIČNO\ TAČNO  { background: #fef9c3; color: #854d0e; }
+    .status-NEPROVJERLIVO      { background: #f3f4f6; color: #6b7280; }
+    .claim .claim-source { font-size: 0.8rem; color: #888; margin-top: 4px; }
+    .claim .claim-note { color: #444; }
+
+    .error-box { background: #fee2e2; color: #991b1b; padding: 12px 16px; border-radius: 6px; margin-top: 16px; font-size: 0.9rem; }
+
+    .toggle { font-size: 0.8rem; opacity: .6; }
+    .collapsed .section-body { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Alat za lekturu novinskih tekstova</div>
+    <div class="subtitle">Automatska provjera tipografskih, gramatičkih, logičkih grešaka i miješanja jezičkih varijanata (BCS)</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="input-card">
+    <p style="font-size:0.88rem;color:#666;margin-bottom:16px;line-height:1.6;">
+      Unesite URL novinskog teksta. Alat automatski preuzima sadržaj i analizira tipografske greške (tipfeler, ćirilična slova u latiničnom tekstu), gramatičke greške (padeži, slaganje, interpunkcija), probleme formatiranja (dupli razmaci, višak praznih redova) i logičke nekonzistentnosti.
+    </p>
+    <label for="url">URL teksta za provjeru</label>
+    <div class="input-row">
+      <input type="url" id="url" placeholder="https://detektor.ba/2026/..." autocomplete="off">
+      <button class="btn btn-primary" id="btnProvjeri" onclick="provjeri()">Provjeri</button>
+    </div>
+  </div>
+
+  <div class="spinner" id="spinner">Analiziram tekst...</div>
+  <div class="error-box" id="errorBox" style="display:none"></div>
+
+  <div class="results" id="results">
+    <div class="summary-bar" id="summaryBar"></div>
+
+    <div id="sections"></div>
+
+  </div>
+</div>
+
+<script>
+let articleText = '';
+
+const SECTIONS = [
+  { key: 'tipografske',  label: 'Tipografske greške',       cls: 'sh-tipografske',  badgeCls: 'badge-red'    },
+  { key: 'gramatičke',   label: 'Gramatičke greške',        cls: 'sh-gramatičke',   badgeCls: 'badge-orange' },
+  { key: 'formatiranje', label: 'Formatiranje',             cls: 'sh-formatiranje', badgeCls: 'badge-blue'   },
+  { key: 'logika',       label: 'Logičke nekonzistentnosti', cls: 'sh-logika',      badgeCls: 'badge-teal'   },
+  { key: 'varijante',   label: 'Miješanje jezičkih varijanata', cls: 'sh-varijante', badgeCls: 'badge-orange' },
+];
+
+async function provjeri() {
+  const url = document.getElementById('url').value.trim();
+  if (!url) return;
+
+  setLoading(true);
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/provjeri', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (data.greška) { showError(data.greška); return; }
+    articleText = data.tekst || '';
+    renderResults(data);
+  } catch (e) {
+    showError('Greška pri komunikaciji s poslužiteljem.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+
+function renderResults(data) {
+  const summaryBar = document.getElementById('summaryBar');
+  const sectionsEl = document.getElementById('sections');
+  summaryBar.innerHTML = '';
+  sectionsEl.innerHTML = '';
+
+  let total = 0;
+  SECTIONS.forEach(s => {
+    const items = data[s.key] || [];
+    total += items.length;
+    const zero = items.length === 0 ? ' badge-zero' : '';
+    summaryBar.innerHTML += `<span class="badge ${s.badgeCls}${zero}">${s.label}: ${items.length}</span>`;
+
+    const section = document.createElement('div');
+    section.className = 'section';
+    section.innerHTML = `
+      <div class="section-header ${s.cls}" onclick="toggleSection(this)">
+        <span>${s.label} (${items.length})</span>
+        <span class="toggle">▼</span>
+      </div>
+      <div class="section-body">
+        ${items.length === 0
+          ? '<p class="empty">Nema grešaka u ovoj kategoriji.</p>'
+          : items.map(renderIssue).join('')}
+      </div>`;
+    sectionsEl.appendChild(section);
+  });
+
+  document.getElementById('results').style.display = 'block';
+}
+
+function renderIssue(item) {
+  return `<div class="issue">
+    <div class="label"><span class="original">${esc(item.original)}</span><span class="arrow">→</span><span class="fix">${esc(item.prijedlog)}</span></div>
+    <div class="desc">${esc(item.greška)}</div>
+  </div>`;
+}
+
+function renderFactCheck(data) {
+  const tvrdnje = data.tvrdnje || [];
+  let html = '<div class="factcheck-results"><h3>Fact-check</h3>';
+  tvrdnje.forEach(t => {
+    const cls = 'status-' + t.status;
+    html += `<div class="claim">
+      <div class="claim-text">"${esc(t.tvrdnja)}"</div>
+      <span class="claim-status ${cls}">${esc(t.status)}</span>
+      <div class="claim-note">${esc(t.objašnjenje)}</div>
+      ${t.izvor ? `<div class="claim-source">Izvor: ${esc(t.izvor)}</div>` : ''}
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('factcheckResults').innerHTML = html;
+}
+
+function toggleSection(header) {
+  header.parentElement.classList.toggle('collapsed');
+  header.querySelector('.toggle').textContent =
+    header.parentElement.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+function setLoading(on) {
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  document.getElementById('btnProvjeri').disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') provjeri();
+});
+</script>
+</body>
+</html>
