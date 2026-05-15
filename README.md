@@ -1,4 +1,4 @@
-# Alat za lekturu novinskih tekstova
+# Greške u člancima
 
 Automatska provjera novinskih tekstova na bosanskom/hrvatskom/srpskom jeziku. Unesi URL — alat preuzima tekst i pronalazi:
 
